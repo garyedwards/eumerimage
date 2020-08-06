@@ -1,0 +1,6 @@
+[Unit]
+Description=European Organisation for the Exploitation of Meteorological Satellite Background Service
+
+[Service]
+Type=oneshot
+ExecStart=/home/gary/.local/bin/eumerimage -o
