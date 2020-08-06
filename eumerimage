@@ -1,0 +1,93 @@
+#!/bin/bash
+
+usage() {
+    echo "Usage: eumerimage [OPTION...]
+Download the latest image from the European Organisation for the Exploitation of Meteorological Satellite and set it as the desktop background.
+
+Options:
+    -o      output the filename of the image but do not set it as the background
+    -v      verbose output
+    -h      display usage"
+}
+
+log() {
+    if [ "$verbose" = true ]; then
+        echo "$*"
+    fi
+}
+
+execute() {
+    log "Executing command: $*"
+    if ! "$@"; then
+        log "Failed to execute command: $*"
+        exit 4
+    fi;
+}
+
+get_images() {
+    url="https://eumetview.eumetsat.int/static-images/latestImages/EUMETSAT_MSG_RGBNatColourEnhncd_FullResolution.jpg"
+    execute curl --silent --output "$filename" "$url"
+}
+
+check_images() {
+    if [ ! -s "$filename" ]; then
+        echo "Failed to download $filename"
+        exit 2
+    fi
+    filetype=$(file -bi "$filename")
+    if [[ ! "$filetype" =~ "image/jpeg" ]]; then
+        echo "$filename is not a jpeg image"
+        exit 3
+    fi
+}
+
+process_images() {
+    execute $TOOLBOX_RUN gm convert "$filename" -gravity north -crop 3712x3633+0+0 latest.jpg
+}
+
+init_dir() {
+    if [ -n "$XDG_CACHE_DIR" ]; then
+        output_dir="$XDG_CACHE_DIR"/eumerimage
+    else
+        output_dir="$HOME"/.cache/eumerimage
+    fi
+    mkdir -p "$output_dir"
+    cd "$output_dir"
+}
+
+set_bg() {
+    if [ "$output_only" = true ]; then
+        echo "$output_dir/latest.jpg"
+    else
+        execute gsettings set org.gnome.desktop.background picture-options 'scaled'
+        execute gsettings set org.gnome.desktop.background picture-uri file:///$output_dir/latest.jpg
+    fi
+}
+
+filename="eumer.jpg"
+if [ "$(echo $HOSTNAME | grep 'toolbox')" ] ; then TOOLBOX_RUN="" ; else TOOLBOX_RUN="toolbox run " ; fi
+
+while getopts "s:ewovh" opt; do
+    case $opt in
+        o)
+            output_only=true
+            ;;
+        v)
+            verbose=true
+            ;;
+        h)
+            usage
+            exit
+            ;;
+        *)
+            usage
+            exit 1
+            ;;
+    esac
+done
+
+init_dir
+get_images
+check_images
+process_images
+set_bg
