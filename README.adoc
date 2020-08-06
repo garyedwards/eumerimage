@@ -4,8 +4,6 @@ EUMERimage is a bash script which downloads the latest imagery from the
 https://www.eumetsat.int/website/home/index.html[European Organisation for the Exploitation of Meteorological Satellite]
 and sets it as the desktop background in https://www.gnome.org/[Gnome].
 
-It heavily references Peter Hogg's https://github.com/pigmonkey/goesimage[goesimage].
-
 == Usage
 
 [source:bash]
